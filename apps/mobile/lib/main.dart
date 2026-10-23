@@ -361,6 +361,16 @@ class _PhoneScreenState extends State<_PhoneScreen> {
   bool _busy = false;
   String? _error;
 
+  void _showPreviewNotice() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'OTP sign-in is not connected in this preview, so no code can be sent.',
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _phone.dispose();
@@ -473,9 +483,11 @@ class _PhoneScreenState extends State<_PhoneScreen> {
               ],
               const SizedBox(height: WashSpace.md),
               ElevatedButton(
-                  onPressed: _busy || widget.previewMode
+                  onPressed: _busy
                       ? null
-                      : (_codeSent ? _verifyCode : _sendCode),
+                      : widget.previewMode
+                          ? _showPreviewNotice
+                          : (_codeSent ? _verifyCode : _sendCode),
                   child: Text(widget.previewMode
                       ? 'Preview only'
                       : _busy
