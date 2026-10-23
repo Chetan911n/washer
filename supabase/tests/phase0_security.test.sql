@@ -2,7 +2,7 @@
 create extension if not exists pgtap with schema extensions;
 begin;
 set local search_path = public, extensions;
-select plan(27);
+select plan(29);
 
 -- Prepare isolated booking/photo fixtures using the deterministic seed identities.
 insert into public.cars (id, customer_id, car_type, number_plate)
@@ -13,6 +13,7 @@ values
  ('40000000-0000-4000-8000-000000000002','20000000-0000-4000-8000-000000000001','2030-01-01 09:30:00+00','2030-01-01 10:30:00+00',2);
 insert into public.bookings (id, customer_id, car_id, society_id, washer_id, slot_id, wash_type, status, price_paise, job_starts_at, job_ends_at)
 values ('50000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001',(select id from public.washers where profile_id='10000000-0000-4000-8000-000000000002'),'40000000-0000-4000-8000-000000000001','basic','assigned',19900,'2030-01-01 09:00:00+00','2030-01-01 09:40:00+00');
+select ok((select admin_review_required from public.bookings where id='50000000-0000-4000-8000-000000000001'), 'a washer’s probation jobs are flagged for admin review');
 insert into public.audit_log (actor_type, actor_id, action, entity_type, entity_id) values ('system', null, 'test_fixture', 'test', 'audit');
 insert into public.job_photos (booking_id, photo_type, side, storage_path, captured_at, location_status, gps_wait_seconds)
 values ('50000000-0000-4000-8000-000000000001','after','bonnet','fixture/after/bonnet.jpg',now(),'no_location',20);
@@ -50,6 +51,8 @@ select throws_ok($$insert into public.profiles(id,role,full_name) values ('10000
 
 reset role;
 select throws_ok($$insert into public.bookings (customer_id,car_id,society_id,washer_id,slot_id,wash_type,status,price_paise,job_starts_at,job_ends_at) values ('10000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000001',(select id from public.washers where profile_id='10000000-0000-4000-8000-000000000002'),'40000000-0000-4000-8000-000000000002','basic','assigned',19900,'2030-01-01 09:30:00+00','2030-01-01 10:10:00+00')$$,'23P01',NULL,'overlapping washer jobs are rejected');
+update public.bookings set status='completed', completed_at=now() where id='50000000-0000-4000-8000-000000000001';
+select is((select probation_jobs_count from public.washers where profile_id='10000000-0000-4000-8000-000000000002'),1,'completed probation jobs increment the washer count exactly once');
 select ok(not has_function_privilege('authenticated','public.reserve_otp_request(text,text)','EXECUTE'),'clients cannot call the trusted OTP rate-limit reservation function');
 select is(public.reserve_otp_request(repeat('a',64),repeat('f',64)),'ok','first phone OTP request is allowed');
 select is(public.reserve_otp_request(repeat('a',64),repeat('f',64)),'ok','second phone OTP request is allowed');

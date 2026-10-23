@@ -4,7 +4,7 @@ Flutter Android app and Supabase backend foundation for a single-society car was
 
 ## Current build status
 
-Phase 0 establishes the shared Flutter theme, Supabase schema, RLS, seed data and private Storage policies. Phase 1 adds customer/washer register and login choices, phone OTP verification, hashed phone/device OTP request limits and a minimum-version gate. Phase 2 starts W6: washers submit a profile photo, private ID document, society, area and preferred hours; applications stay pending with zero job capacity until an owner approves them. The owner review console is in `apps/admin`; later W2–W12 workflows remain in progress.
+Phase 0 establishes the shared Flutter theme, Supabase schema, RLS, seed data and private Storage policies. Phase 1 adds customer/washer register and login choices, phone OTP verification, hashed phone/device OTP request limits and a minimum-version gate. Phase 2 implements W6 washer registration and owner approval. Applications stay pending with zero job capacity until approval, and each of the washer's first ten completed jobs is flagged for admin review. The owner review console is in `apps/admin`; later W2–W12 workflows remain in progress.
 
 Prerequisites: Flutter/Dart, Node.js for the future admin app, Docker, and the Supabase CLI. From `apps/mobile`, run `flutter pub get` and `flutter run`. For backend local development, run `supabase start`, apply migrations with `supabase db reset`, then run the SQL security suite with `supabase test db` and inspect the local database and Storage policies. The schema and seed data are in `supabase/migrations/0001_phase0_schema.sql` and `supabase/seed.sql`.
 
