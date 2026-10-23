@@ -33,3 +33,6 @@ enable_confirmations = true
 
 [functions.request-phone-otp]
 verify_jwt = false
+
+[functions.review-washer-application]
+verify_jwt = true

@@ -4,7 +4,7 @@ Flutter Android app and Supabase backend foundation for a single-society car was
 
 ## Current build status
 
-Phase 0 establishes the shared Flutter theme, Supabase schema, RLS, seed data and private Storage policies. Phase 1 adds customer/washer register and login choices, phone OTP verification, hashed phone/device OTP request limits and a minimum-version gate. The later W2–W12 workflows and admin web app are still being built.
+Phase 0 establishes the shared Flutter theme, Supabase schema, RLS, seed data and private Storage policies. Phase 1 adds customer/washer register and login choices, phone OTP verification, hashed phone/device OTP request limits and a minimum-version gate. Phase 2 starts W6: washers submit a profile photo, private ID document, society, area and preferred hours; applications stay pending with zero job capacity until an owner approves them. The owner review console is in `apps/admin`; later W2–W12 workflows remain in progress.
 
 Prerequisites: Flutter/Dart, Node.js for the future admin app, Docker, and the Supabase CLI. From `apps/mobile`, run `flutter pub get` and `flutter run`. For backend local development, run `supabase start`, apply migrations with `supabase db reset`, then run the SQL security suite with `supabase test db` and inspect the local database and Storage policies. The schema and seed data are in `supabase/migrations/0001_phase0_schema.sql` and `supabase/seed.sql`.
 
@@ -68,6 +68,8 @@ For a physical device, replace `10.0.2.2` with the Mac's LAN IP. Get the local p
 
 For production SMS in India, ask the chosen SMS provider to confirm the applicable TRAI DLT steps before launch. TRAI’s sender guidance lists Principal Entity registration, header assignment and content-template registration among the requirements for applicable messages: [TRAI Advice to Senders](https://trai.gov.in/advice-to-senders).
 
-## Admin secret handling
+## Owner account and washer review
 
-When the owner-only web app is added, the Supabase service-role key must remain in server-only environment variables and must never use a `NEXT_PUBLIC_` prefix. Admin routes must verify the owner claim on the server. Create the owner account manually with email login and require TOTP-based two-factor authentication; do not require a phone number for the admin account.
+Create the owner account manually in Supabase Auth with email and password; do not add a phone number. In Supabase Auth, enable and verify a TOTP authenticator factor. Set the account's `app_metadata.role` to `admin` using the Supabase dashboard or trusted SQL; never accept an admin role from user-editable metadata. The review Edge Function checks both that owner claim and the session's AAL2 assurance before returning applicant details or accepting a decision.
+
+The static review console is `apps/admin/public`. It uses the public anon key and calls `review-washer-application`; the Supabase service-role key stays inside the Edge Function runtime. To deploy the console as a separate Vercel project, set its Root Directory to `apps/admin`. On first visit, enter the Supabase project URL and public anon key, then sign in with the email account and TOTP code. The console creates short-lived signed links for ID documents and profile photos. Approval sets the daily cap and approved shift; rejection is recorded in the append-only audit log.

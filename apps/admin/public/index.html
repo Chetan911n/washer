@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f7f6" />
+    <title>Society Wash · Owner review</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Society Wash home"><span class="brand-icon">S</span><span>Society Wash</span></a>
+        <span class="owner-label">Owner workspace</span>
+      </header>
+
+      <section class="intro">
+        <p class="eyebrow">Washer operations</p>
+        <h1>Applications</h1>
+        <p>Review identity documents and approve working hours before a washer can receive jobs.</p>
+      </section>
+
+      <section id="settings" class="panel settings-panel">
+        <h2>Connect your Supabase project</h2>
+        <p class="muted">Use your project URL and public anon key. The private service key is never used here.</p>
+        <form id="config-form" class="config-form">
+          <label>Project URL<input id="project-url" type="url" placeholder="https://your-project.supabase.co" required /></label>
+          <label>Public anon key<input id="anon-key" type="password" autocomplete="off" placeholder="sb_publishable_…" required /></label>
+          <button class="button primary" type="submit">Save and continue</button>
+        </form>
+      </section>
+
+      <section id="signin" class="panel auth-panel hidden">
+        <h2>Owner sign in</h2>
+        <p class="muted">Sign in with the owner email account, then complete authenticator verification.</p>
+        <form id="signin-form" class="stack">
+          <label>Email<input id="email" type="email" autocomplete="username" required /></label>
+          <label>Password<input id="password" type="password" autocomplete="current-password" required /></label>
+          <button class="button primary" type="submit">Continue</button>
+        </form>
+        <form id="mfa-form" class="stack hidden">
+          <label>Authenticator code<input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></label>
+          <button class="button primary" type="submit">Verify and sign in</button>
+        </form>
+      </section>
+
+      <section id="dashboard" class="hidden">
+        <div class="dashboard-head">
+          <div><h2>Pending applications</h2><p class="muted">Review each application and set the approved daily cap and shift.</p></div>
+          <div class="head-actions"><button id="refresh" class="button secondary">Refresh</button><button id="signout" class="button quiet">Sign out</button></div>
+        </div>
+        <div id="notice" class="notice hidden" role="status"></div>
+        <div id="applications" class="application-list"></div>
+      </section>
+      <div id="toast" class="toast hidden" role="status"></div>
+      <footer>Access is limited to the owner account with two-factor authentication.</footer>
+    </main>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

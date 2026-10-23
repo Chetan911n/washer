@@ -2,7 +2,7 @@
 create extension if not exists pgtap with schema extensions;
 begin;
 set local search_path = public, extensions;
-select plan(21);
+select plan(27);
 
 -- Prepare isolated booking/photo fixtures using the deterministic seed identities.
 insert into public.cars (id, customer_id, car_type, number_plate)
@@ -19,14 +19,24 @@ values ('50000000-0000-4000-8000-000000000001','after','bonnet','fixture/after/b
 select ok((select admin_review_required from public.bookings where id='50000000-0000-4000-8000-000000000001'), 'no GPS photo after 20 seconds flags the booking for admin review');
 insert into public.job_photos (id, booking_id, photo_type, side, storage_path, captured_at, latitude, longitude)
 values ('60000000-0000-4000-8000-000000000001','50000000-0000-4000-8000-000000000001','before','front','fixture/before/front.jpg',now(),19.99,73.78);
+insert into storage.objects (bucket_id, name)
+values ('washer-ids','10000000-0000-4000-8000-000000000002/identity.jpg');
+
+select ok(public.valid_shift_schedule('[{"days":[1,2,3,4,5,6],"start":"07:00","end":"14:00"}]'::jsonb), 'valid requested working hours are accepted');
+select ok(not public.valid_shift_schedule('[{"days":[8],"start":"18:00","end":"07:00"}]'::jsonb), 'invalid requested working hours are rejected');
+select ok(not has_function_privilege('authenticated','public.admin_review_washer_application(uuid,text,integer,jsonb,uuid)','EXECUTE'), 'only the trusted admin server can call the washer review function');
 
 select ok(not has_column_privilege('authenticated','public.bookings','start_otp_hash','SELECT'), 'start OTP hash is not selectable by clients');
 
-update public.washers set status='pending' where profile_id='10000000-0000-4000-8000-000000000002';
+update public.washers set status='pending', daily_cap=0, shift_hours='[]'::jsonb where profile_id='10000000-0000-4000-8000-000000000002';
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000002',true);
 select is((select count(*) from public.bookings),0::bigint,'pending washer cannot read job data');
 select is((select count(*) from public.profiles where id='10000000-0000-4000-8000-000000000001'),0::bigint,'washer cannot read customer profile or phone');
+select is((select count(*) from storage.objects where bucket_id='washer-ids' and name='10000000-0000-4000-8000-000000000002/identity.jpg'),0::bigint,'washer cannot read their uploaded identity document');
+select lives_ok($$update storage.objects set metadata='{"mimetype":"image/jpeg"}'::jsonb where bucket_id='washer-ids' and name='10000000-0000-4000-8000-000000000002/identity.jpg'$$,'pending washer can retry an interrupted ID upload');
+update public.washers set status='approved', daily_cap=99 where profile_id='10000000-0000-4000-8000-000000000002';
+select is((select status::text || ':' || daily_cap::text from public.washers where profile_id='10000000-0000-4000-8000-000000000002'),'pending:0','washer cannot approve itself or set its job cap');
 
 reset role;
 update public.washers set status='approved' where profile_id='10000000-0000-4000-8000-000000000002';
